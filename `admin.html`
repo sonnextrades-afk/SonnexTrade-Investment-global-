@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Admin Panel - SonnexTrade Global</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header><h1>Admin Panel</h1><button onclick="logout()">Logout</button></header>
+<div class="container">
+  <h3>All Users</h3>
+  <ul id="allUsers"></ul>
+  <h3>Pending Requests</h3>
+  <ul id="pendingRequests"></ul>
+</div>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+<script src="app.js"></script>
+<script>checkAdminPage();</script>
+</body>
+</html>

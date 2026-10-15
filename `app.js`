@@ -1,0 +1,80 @@
+// REPLACE THIS WITH YOUR FIREBASE CONFIG
+const firebaseConfig = {
+  apiKey: "YOUR_API_KEY",
+  authDomain: "YOUR_PROJECT.firebaseapp.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT.appspot.com",
+  messagingSenderId: "123456789",
+  appId: "YOUR_APP_ID"
+};
+firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db = firebase.firestore();
+
+function login() {
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  auth.signInWithEmailAndPassword(email, password)
+    .then(() => { window.location.href = 'user.html'; })
+    .catch(e => { document.getElementById('msg').innerText = e.message; });
+}
+
+function signup() {
+  const email = document.getElementById('email').value;
+  const password = document.getElementById('password').value;
+  auth.createUserWithEmailAndPassword(email, password)
+    .then((cred) => {
+      return db.collection('users').doc(cred.user.uid).set({
+        email: email, balance: 0, role: 'user', kyc: 'Pending', created: new Date()
+      });
+    })
+    .then(() => { window.location.href = 'user.html'; })
+    .catch(e => { document.getElementById('msg').innerText = e.message; });
+}
+
+function logout() {
+  auth.signOut().then(() => { window.location.href = 'login.html'; });
+}
+
+function checkUserPage() {
+  auth.onAuthStateChanged(user => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    document.getElementById('userEmail').innerText = user.email;
+    db.collection('users').doc(user.uid).onSnapshot(doc => {
+      if (doc.exists) {
+        document.getElementById('balance').innerText = doc.data().balance.toFixed(2);
+        document.getElementById('kycStatus').innerText = doc.data().kyc;
+      }
+    });
+    db.collection('transactions').where('userId','==',user.uid).onSnapshot(snap => {
+      const list = document.getElementById('transactions');
+      list.innerHTML = '';
+      snap.forEach(d => { list.innerHTML += `<li>${d.data().type}: $${d.data().amount} - ${d.data().status}</li>`; });
+    });
+  });
+}
+
+function checkAdminPage() {
+  auth.onAuthStateChanged(user => {
+    if (!user) { window.location.href = 'login.html'; return; }
+    db.collection('users').get().then(snap => {
+      const list = document.getElementById('allUsers');
+      list.innerHTML = '';
+      snap.forEach(d => { list.innerHTML += `<li>${d.data().email} - Balance: $${d.data().balance} - ${d.data().kyc}</li>`; });
+    });
+  });
+}
+
+function requestDeposit() {
+  const amount = Number(document.getElementById('amount').value);
+  const user = auth.currentUser;
+  db.collection('transactions').add({ userId: user.uid, email: user.email, type: 'Deposit', amount: amount, status: 'Pending', date: new Date() });
+  alert('Deposit request sent!');
+}
+
+function requestWithdraw() {
+  const amount = Number(document.getElementById('amount').value);
+  const user = auth.currentUser;
+  db.collection('transactions').add({ userId: user.uid, email: user.email, type: 'Withdraw', amount: amount, status: 'Pending', date: new Date() });
+  alert('Withdraw request sent!');
+}
